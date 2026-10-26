@@ -4,6 +4,7 @@ import 'package:gym_app/screens/splash_screen.dart';
 
 import 'db/app_db.dart';
 import 'screens/auth.dart';
+import 'screens/subscription_expired.dart';
 import 'screens/shell.dart';
 import 'widgets/common.dart';
 
@@ -91,6 +92,7 @@ class Gate extends StatefulWidget {
 
 class _GateState extends State<Gate> {
   bool? hasSession;
+  bool subscriptionExpired = false;
 
   @override
   void initState() {
@@ -99,21 +101,24 @@ class _GateState extends State<Gate> {
   }
 
   Future<void> _checkSession() async {
+    var session = false;
     try {
-      final session = await AppDb.i.hasSession();
+      session = await AppDb.i.hasSession();
+      final admin = session ? await AppDb.i.currentAdmin() : null;
+      final expired = session && admin?['subscription_active'] != true;
 
+      if (!mounted) return;
+
+      setState(() {
+        hasSession = session && !expired;
+        subscriptionExpired = expired;
+      });
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
         hasSession = session;
-      });
-    } catch (e) {
-      // If session check fails,
-      // safely send user to login.
-      if (!mounted) return;
-
-      setState(() {
-        hasSession = false;
+        subscriptionExpired = false;
       });
     }
   }
@@ -133,6 +138,10 @@ class _GateState extends State<Gate> {
 
     if (hasSession!) {
       return const Shell();
+    }
+
+    if (subscriptionExpired) {
+      return const SubscriptionExpiredScreen();
     }
 
     return const AuthScreen();

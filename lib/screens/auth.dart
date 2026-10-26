@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../db/app_db.dart';
 import '../widgets/common.dart';
+import 'subscription_expired.dart';
 import 'shell.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -13,6 +15,9 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  static const _demoEmail = 'demo@gymtest.com';
+  static const _demoPassword = 'GymDemo123!';
+
   bool loading = false, hide = true, remember = true;
 
   final email = TextEditingController();
@@ -33,34 +38,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => loading = true);
 
     try {
-      final user = await AppDb.i.login(email.text, pass.text);
-      if (!mounted) return;
-
-      if (user == null) {
-        setState(() {
-          err = 'Invalid email or password.';
-          errIsOk = false;
-        });
-      } else {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('login', remember);
-        await prefs.setString(
-          'admin_name',
-          (user['name'] as String?) ?? 'Coach',
-        );
-        await prefs.setString(
-          'admin_email',
-          (user['email'] as String?) ?? email.text.trim(),
-        );
-        await prefs.setString('admin_id', '${user['id'] ?? ''}');
-        await prefs.setString('admin_phone', (user['phone'] as String?) ?? '');
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const Shell()),
-        );
-      }
+      await _signIn(email.text, pass.text);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -72,6 +50,62 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) {
         setState(() => loading = false);
       }
+    }
+  }
+
+  Future<void> signInAsDemo() async {
+    if (loading) return;
+    email.text = _demoEmail;
+    pass.text = _demoPassword;
+    setState(() {
+      loading = true;
+      err = null;
+      errIsOk = false;
+    });
+
+    try {
+      await _signIn(_demoEmail, _demoPassword);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          err = e.toString().replaceFirst('Exception: ', '');
+          errIsOk = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> _signIn(String userEmail, String password) async {
+    final user = await AppDb.i.login(userEmail, password);
+    if (!mounted) return;
+
+    if (user == null) {
+      setState(() {
+        err = 'Invalid email or password.';
+        errIsOk = false;
+      });
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('login', remember);
+      await prefs.setString('admin_name', (user['name'] as String?) ?? 'Coach');
+      await prefs.setString(
+        'admin_email',
+        (user['email'] as String?) ?? userEmail.trim(),
+      );
+      await prefs.setString('admin_id', '${user['id'] ?? ''}');
+      await prefs.setString('admin_phone', (user['phone'] as String?) ?? '');
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => user['subscription_active'] == true
+              ? const Shell()
+              : const SubscriptionExpiredScreen(),
+        ),
+      );
     }
   }
 
@@ -278,6 +312,17 @@ class _AuthScreenState extends State<AuthScreen> {
                             busy: loading,
                             onPressed: go,
                           ),
+                          if (kDebugMode) ...[
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: loading ? null : signInAsDemo,
+                                icon: const Icon(Icons.science_outlined),
+                                label: const Text('Try Demo User'),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

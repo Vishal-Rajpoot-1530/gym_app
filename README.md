@@ -1,17 +1,24 @@
 # gym_app
 
-A new Flutter project.
+The gym app connects to `gym-services-api` using the API root
+`http://192.168.1.43:3001/api/v1` by default for the development phone on the
+current Wi-Fi network. Change this address if the computer's LAN IP changes.
+Log in using an existing active gym administrator account provisioned on the
+backend.
 
-## Getting Started
+In debug builds, **Try Demo User** signs in to a seeded development account.
+From `gym-services-api`, prepare it with `npm run demo:seed` after applying the
+database migrations. Demo credentials are `demo@gymtest.com` /
+`GymDemo123!`. The seed command refuses to run in production; do not use the
+demo account for a production deployment.
 
-This project is a starting point for a Flutter application.
+For other environments, provide the API root at run/build time:
 
-A few resources to get you started if this is your first Flutter project:
+```powershell
+flutter run --dart-define=API_BASE_URL=http://YOUR_HOST:3001/api/v1
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For an Android emulator, use `http://10.0.2.2:3001/api/v1`; for desktop/web on
+the API host, use `http://localhost:3001/api/v1`. For a physical device, use
+the host computer's LAN IP and ensure the API is listening on the LAN interface.
+Use HTTPS for deployed environments.

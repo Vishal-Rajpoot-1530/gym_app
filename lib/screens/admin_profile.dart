@@ -213,24 +213,103 @@ class AdminProfileScreen extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       sub,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: muted,
-                      ),
+                      style: const TextStyle(fontSize: 12.5, color: muted),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: muted,
-              ),
+              const Icon(Icons.chevron_right_rounded, color: muted),
             ],
           ),
         ),
       ),
     ),
   );
+
+  Widget _subscriptionCard(Map<String, Object?>? subscription) {
+    final planType = subscription?['plan_type'] as String?;
+    final duration = (subscription?['duration_months'] as num?)?.toInt();
+    final expiry = DateTime.tryParse(
+      subscription?['expiry_date'] as String? ?? '',
+    );
+    final planName = switch (planType) {
+      'monthly' => 'Monthly',
+      'quarterly' => 'Quarterly',
+      'yearly' => 'Yearly',
+      _ => planType ?? 'No active plan',
+    };
+    final durationLabel = duration == null
+        ? 'Not available'
+        : duration == 1
+        ? '1 month'
+        : '$duration months';
+
+    Widget detail(String label, String value) => Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: muted, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium_rounded, color: orange),
+              const SizedBox(width: 8),
+              Text(
+                planName,
+                style: const TextStyle(
+                  color: ink,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          detail('Duration', durationLabel),
+          detail(
+            'Expires',
+            expiry == null
+                ? 'Not available'
+                : DateFormat('dd MMM yyyy').format(expiry),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +337,8 @@ class AdminProfileScreen extends StatelessWidget {
                       final created = DateTime.tryParse(
                         (admin['created_at'] as String?) ?? '',
                       );
+                      final subscription =
+                          admin['subscription'] as Map<String, Object?>?;
                       return ListView(
                         padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
                         children: [
@@ -349,7 +430,9 @@ class AdminProfileScreen extends StatelessWidget {
                                       ),
                                       if (email.isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.only(top: 4),
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
                                           child: Text(
                                             email,
                                             overflow: TextOverflow.ellipsis,
@@ -384,6 +467,9 @@ class AdminProfileScreen extends StatelessWidget {
                               ],
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          const SectionTitle('Current subscription'),
+                          _subscriptionCard(subscription),
                           const SizedBox(height: 12),
                           Row(
                             children: [
