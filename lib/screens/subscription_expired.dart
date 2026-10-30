@@ -105,48 +105,129 @@ class _SubscriptionExpiredScreenState extends State<SubscriptionExpiredScreen> {
     BuildContext context,
     Map<String, Object?> admin,
     ({String title, String duration, int price}) plan,
-  ) => Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: lineGrey),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.workspace_premium_rounded, color: orange),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  ) {
+    final featured = plan.title == 'Yearly';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: featured ? orange.withValues(alpha: 0.45) : lineGrey,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: featured
+                ? orange.withValues(alpha: 0.10)
+                : Colors.black.withValues(alpha: 0.025),
+            blurRadius: featured ? 20 : 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Text(
-                plan.title,
-                style: const TextStyle(
-                  color: ink,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: orangeSoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  featured
+                      ? Icons.workspace_premium_rounded
+                      : Icons.calendar_month_rounded,
+                  color: orange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            plan.title,
+                            style: const TextStyle(
+                              color: ink,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (featured) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: orangeSoft,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: const Text(
+                              'BEST VALUE',
+                              style: TextStyle(
+                                color: ink,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      plan.duration,
+                      style: const TextStyle(color: muted, fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
               Text(
-                '${plan.duration}  •  ${inr(plan.price)}',
-                style: const TextStyle(color: muted, fontSize: 12),
+                inr(plan.price),
+                style: const TextStyle(
+                  color: ink,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: orange,
-            foregroundColor: ink,
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 46,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: featured ? orange : orangeSoft,
+                foregroundColor: ink,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () => _requestPlan(context, admin, plan),
+              icon: const Icon(Icons.chat_rounded, size: 18),
+              label: const Text(
+                'Renew via WhatsApp',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
-          onPressed: () => _requestPlan(context, admin, plan),
-          child: const Text('Renew'),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _content(Map<String, Object?> admin) {
     final subscription = admin['subscription'] as Map<String, Object?>?;
@@ -171,133 +252,312 @@ class _SubscriptionExpiredScreenState extends State<SubscriptionExpiredScreen> {
         : '$duration months';
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
       children: [
-        const Icon(Icons.lock_clock_rounded, color: warnRed, size: 52),
-        const SizedBox(height: 14),
-        Text(
-          hasPreviousSubscription
-              ? 'Subscription expired'
-              : 'Subscription required',
-          textAlign: TextAlign.center,
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [orange, Color.lerp(orange, ink, 0.22)!],
+            ),
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: orange.withValues(alpha: 0.24),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -32,
+                top: -46,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.lock_clock_rounded,
+                            color: Colors.white,
+                            size: 25,
+                          ),
+                        ),
+                        const SizedBox(width: 11),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                hasPreviousSubscription
+                                    ? 'PLAN EXPIRED'
+                                    : 'PLAN REQUIRED',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      hasPreviousSubscription
+                          ? 'Your subscription has ended'
+                          : 'Choose a plan to get started',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
+                    Text(
+                      'Renew your gym plan to restore access to your '
+                      'management workspace.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: lineGrey),
+            boxShadow: [
+              BoxShadow(
+                color: ink.withValues(alpha: 0.035),
+                blurRadius: 18,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Subscription details',
+                      style: TextStyle(
+                        color: ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: redSoft,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: const Text(
+                      'INACTIVE',
+                      style: TextStyle(
+                        color: warnRed,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              _detailRow(Icons.workspace_premium_outlined, 'Plan', planTitle),
+              const SizedBox(height: 13),
+              _detailRow(Icons.timelapse_rounded, 'Duration', durationLabel),
+              const SizedBox(height: 13),
+              _detailRow(
+                Icons.event_busy_rounded,
+                hasPreviousSubscription ? 'Expired on' : 'Plan expiry',
+                expiry == null
+                    ? 'Not available'
+                    : DateFormat('dd MMM yyyy').format(expiry),
+                valueColor: warnRed,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 26),
+        const Text(
+          'Choose your plan',
           style: TextStyle(
             color: ink,
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Select an option below to request a secure renewal.',
+          style: TextStyle(color: muted, fontSize: 13, height: 1.45),
+        ),
+        const SizedBox(height: 14),
+        for (final plan in _plans) _planCard(context, admin, plan),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            color: blueSoft,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: blue.withValues(alpha: 0.08)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.support_agent_rounded, color: blue),
+                  const SizedBox(width: 9),
+                  const Expanded(
+                    child: Text(
+                      'Need a hand?',
+                      style: TextStyle(
+                        color: ink,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'RewantechSolutions',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 7),
+              const Text(
+                'Our team can help you choose the right plan.',
+                style: TextStyle(color: muted, fontSize: 12, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final number in _contactNumbers)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Text(
+                        number,
+                        style: const TextStyle(
+                          color: ink,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          height: 50,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ink,
+              side: BorderSide(color: orange.withValues(alpha: 0.45)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            onPressed: checking ? null : _checkSubscription,
+            icon: checking
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.sync_rounded),
+            label: Text(
+              checking ? 'Checking subscription...' : 'I have renewed — check again',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Renew your gym subscription to continue. Management services are '
-          'unavailable until the plan is active.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: muted, fontSize: 14, height: 1.5),
-        ),
-        const SizedBox(height: 22),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: lineGrey),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                hasPreviousSubscription
-                    ? 'Previous subscription'
-                    : 'Subscription status',
-                style: TextStyle(
-                  color: ink,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text('Plan: $planTitle', style: const TextStyle(color: ink)),
-              const SizedBox(height: 6),
-              Text(
-                'Duration: $durationLabel',
-                style: const TextStyle(color: ink),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${hasPreviousSubscription ? 'Expired' : 'Plan expiry'}: ${expiry == null ? 'Not available' : DateFormat('dd MMM yyyy').format(expiry)}',
-                style: const TextStyle(
-                  color: warnRed,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 22),
-        const Text(
-          'Choose a plan to renew',
-          style: TextStyle(
-            color: ink,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 10),
-        for (final plan in _plans) _planCard(context, admin, plan),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: blueSoft,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'RewantechSolutions',
-                style: TextStyle(color: ink, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Contact numbers',
-                style: TextStyle(color: muted, fontSize: 13),
-              ),
-              for (final number in _contactNumbers)
-                Text(
-                  number,
-                  style: const TextStyle(
-                    color: ink,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: checking ? null : _checkSubscription,
-          icon: checking
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh_rounded),
-          label: Text(
-            checking ? 'Checking...' : 'I have renewed — check again',
-          ),
-        ),
-        const SizedBox(height: 10),
         TextButton.icon(
           onPressed: returningToLogin ? null : _returnToLogin,
           icon: returningToLogin
               ? const SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: 17,
+                  height: 17,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Icon(Icons.arrow_back_rounded),
+              : const Icon(Icons.logout_rounded, size: 18),
           label: Text(
             returningToLogin ? 'Returning to login...' : 'Back to login',
           ),
@@ -305,6 +565,32 @@ class _SubscriptionExpiredScreenState extends State<SubscriptionExpiredScreen> {
       ],
     );
   }
+
+  Widget _detailRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color valueColor = ink,
+  }) => Row(
+    children: [
+      Icon(icon, size: 18, color: muted),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(label, style: const TextStyle(color: muted, fontSize: 13)),
+      ),
+      Flexible(
+        child: Text(
+          value,
+          textAlign: TextAlign.end,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) => PopScope(

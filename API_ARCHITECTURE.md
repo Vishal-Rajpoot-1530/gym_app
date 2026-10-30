@@ -13,6 +13,9 @@ The app has no local SQLite store or demo login. Account creation requires the
 environment; only online accounts are supported. Never ship this key in the
 mobile app.
 
+The app's `GYM_API_BASE_URL` setting always resolves to the Gym service on port
+`3001`; it does not use the Physio backend configuration.
+
 ### Request logs
 Run Flutter with `flutter run`. Every request prints:
 `[API] --> GET http://.../api/v1/members`
