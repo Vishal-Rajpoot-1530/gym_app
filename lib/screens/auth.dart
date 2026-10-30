@@ -141,7 +141,7 @@ class _AuthScreenState extends State<AuthScreen> {
         child: Container(
           width: double.infinity,
           height: double.infinity,
-          color: Colors.black.withValues(alpha: 0.38),
+          color: Colors.black.withValues(alpha: 0.32),
 
           child: SafeArea(
             child: Center(
@@ -149,34 +149,46 @@ class _AuthScreenState extends State<AuthScreen> {
                 padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
                 child: Column(
                   children: [
-                    const BigLogo(),
+                  const GlassPanel(
+                    padding: EdgeInsets.fromLTRB(22, 18, 22, 16),
+                    child: BigLogo(),
+                  ),
 
-                    const SizedBox(height: 26),
+                  const SizedBox(height: 16),
 
-                    const Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Welcome Back, Owner',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
+                  const GlassPanel(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    borderRadius: 18,
+                    child: Column(
+                      children: [
+                        ExtrudedText(
+                          'Welcome Back, Owner',
+                          depthColor: Color(0xff7a3d08),
+                          depth: 3,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Access your gym management hub',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 4),
-
-                    const Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Access your gym management hub',
-                        style: TextStyle(color: Colors.white60),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
                     const SizedBox(height: 14),
 
@@ -188,6 +200,21 @@ class _AuthScreenState extends State<AuthScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: orange.withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 28,
+                            offset: const Offset(0, 14),
+                          ),
+                          BoxShadow(
+                            color: orange.withValues(alpha: 0.14),
+                            blurRadius: 20,
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

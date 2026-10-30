@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -140,8 +142,10 @@ class BigLogo extends StatelessWidget {
     children: const [
       LogoMark(size: 84),
       SizedBox(height: 12),
-      Text(
+      ExtrudedText(
         'RTS GYM',
+        depthColor: Color(0xff7a3d08),
+        depth: 4,
         style: TextStyle(
           color: Colors.white,
           fontSize: 30,
@@ -149,8 +153,10 @@ class BigLogo extends StatelessWidget {
           letterSpacing: 1,
         ),
       ),
-      Text(
+      ExtrudedText(
         'MANAGEMENT',
+        depthColor: Color(0xff6d3500),
+        depth: 4,
         style: TextStyle(
           color: orange,
           fontSize: 30,
@@ -160,8 +166,10 @@ class BigLogo extends StatelessWidget {
         ),
       ),
       SizedBox(height: 4),
-      Text(
+      ExtrudedText(
         'GYM & FITNESS',
+        depthColor: Color(0xff7a3d08),
+        depth: 2,
         style: TextStyle(
           color: Colors.white70,
           fontSize: 11,
@@ -170,6 +178,131 @@ class BigLogo extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class ExtrudedText extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final Color depthColor;
+  final int depth;
+  final TextAlign textAlign;
+
+  const ExtrudedText(
+    this.text, {
+    super.key,
+    required this.style,
+    required this.depthColor,
+    this.depth = 3,
+    this.textAlign = TextAlign.center,
+  });
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    alignment: Alignment.center,
+    clipBehavior: Clip.none,
+    children: [
+      for (var layer = depth; layer > 0; layer--)
+        Transform.translate(
+          offset: Offset(layer.toDouble(), layer.toDouble()),
+          child: Text(
+            text,
+            textAlign: textAlign,
+            style: style.copyWith(color: depthColor, shadows: const []),
+          ),
+        ),
+      Text(
+        text,
+        textAlign: textAlign,
+        style: style.copyWith(
+          shadows: [
+            Shadow(
+              color: orange.withValues(alpha: 0.45),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class GlassPanel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final double borderRadius;
+
+  const GlassPanel({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.borderRadius = 24,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.22),
+          blurRadius: 28,
+          offset: const Offset(0, 12),
+        ),
+        BoxShadow(
+          color: orange.withValues(alpha: 0.12),
+          blurRadius: 24,
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.13),
+                const Color(0xff17120e).withValues(alpha: 0.44),
+                orange.withValues(alpha: 0.06),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.28),
+              width: 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 18,
+                right: 18,
+                top: 0,
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withValues(alpha: 0.7),
+                        orange.withValues(alpha: 0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(padding: padding, child: child),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 }
 

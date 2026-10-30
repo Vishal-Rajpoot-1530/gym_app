@@ -8,6 +8,7 @@ import 'screens/subscription_expired.dart';
 import 'screens/shell.dart';
 import 'widgets/common.dart';
 
+
 Future<void> loadPlans() async {
   final plans = await AppDb.i.plans();
   await AppDb.i.setPlans(plans);

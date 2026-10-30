@@ -32,20 +32,20 @@ npx prisma generate
 npx prisma migrate dev --name init
 npm run start:dev
 ```
-API base: `http://localhost:3000/api/v1`
+Gym API base: `http://localhost:3001/api/v1`
 
 ## 3. Flutter
-The default API URL targets the backend on port 3000 from an Android emulator
+The default Gym API URL targets the backend on port 3001 from an Android emulator
 (`10.0.2.2` maps to the host computer). You can also set it explicitly:
 ```bash
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
+flutter run --dart-define=GYM_API_BASE_URL=http://10.0.2.2:3001/api/v1
 ```
 For physical Android devices over USB, use adb reverse so the device points to your computer:
 ```bash
-adb reverse tcp:3000 tcp:3000
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:3000/api/v1
+adb reverse tcp:3001 tcp:3001
+flutter run --dart-define=GYM_API_BASE_URL=http://127.0.0.1:3001/api/v1
 ```
-For Wi‑Fi/device-server access, replace `127.0.0.1` with your PC's LAN IP, example: `http://192.168.1.25:3000/api/v1`.
+For Wi‑Fi/device-server access, replace `127.0.0.1` with your PC's LAN IP, example: `http://192.168.1.25:3001/api/v1`.
 
 Important: `127.0.0.1` points to the phone itself, not the backend server running on your laptop/desktop.
 
