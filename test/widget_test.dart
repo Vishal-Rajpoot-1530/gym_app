@@ -26,4 +26,23 @@ void main() {
     expect(make(-2).state, MStatus.inactive);
     expect(make(30, status: 'inactive').state, MStatus.inactive);
   });
+
+  test('member shift survives model serialization and defaults to morning', () {
+    final member = Member(
+      name: 'Test User',
+      gender: 'Male',
+      age: 25,
+      plan: '1 Month',
+      durationMonths: 1,
+      fee: 65,
+      shift: 'Evening',
+      joiningDate: DateTime(2026, 11, 13),
+      expiryDate: DateTime(2026, 12, 13),
+    );
+    final restored = Member.fromMap(member.toMap());
+    final oldMap = member.toMap()..remove('shift');
+
+    expect(restored.shift, 'Evening');
+    expect(Member.fromMap(oldMap).shift, 'Morning');
+  });
 }

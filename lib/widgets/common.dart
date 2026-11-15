@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../api/api_exception.dart';
 import '../db/app_db.dart';
 import '../models/member.dart';
 import '../screens/admin_profile.dart';
@@ -250,10 +251,7 @@ class GlassPanel extends StatelessWidget {
           blurRadius: 28,
           offset: const Offset(0, 12),
         ),
-        BoxShadow(
-          color: orange.withValues(alpha: 0.12),
-          blurRadius: 24,
-        ),
+        BoxShadow(color: orange.withValues(alpha: 0.12), blurRadius: 24),
       ],
     ),
     child: ClipRRect(
@@ -385,6 +383,17 @@ class TabHeader extends StatelessWidget {
                   ? [
                       Live<String>(
                         load: AppDb.i.appName,
+                        errorBuilder: (context, error, retry) => Text(
+                          AppDb.defaultAppName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                        ),
                         builder: (context, name) => Text(
                           name,
                           maxLines: 1,
@@ -410,6 +419,17 @@ class TabHeader extends StatelessWidget {
                   : [
                       Live<String>(
                         load: AppDb.i.appName,
+                        errorBuilder: (context, error, retry) => Text(
+                          AppDb.defaultAppName.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: orange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
                         builder: (context, name) => Text(
                           name.toUpperCase(),
                           maxLines: 1,
@@ -442,6 +462,15 @@ class TabHeader extends StatelessWidget {
                       (m.status == 'active' && m.lapsed),
                 )
                 .length,
+            errorBuilder: (c, error, retry) => IconButton(
+              tooltip: ApiException.serviceUnavailableMessage,
+              onPressed: retry,
+              icon: const Icon(
+                Icons.notifications_off_outlined,
+                color: Colors.white54,
+                size: 28,
+              ),
+            ),
             builder: (c, n) => IconButton(
               onPressed: () => showAlerts(c),
               icon: Stack(

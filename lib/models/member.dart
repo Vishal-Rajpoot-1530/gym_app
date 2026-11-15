@@ -15,7 +15,7 @@ enum MStatus { active, dueSoon, inactive }
 
 class Member {
   final int? id;
-  final String name, email, phone, gender, plan, status, notes, keycard;
+  final String name, email, phone, gender, plan, shift, status, notes, keycard;
   final int age, durationMonths;
   final double fee, prKg;
   final DateTime joiningDate, expiryDate, createdAt;
@@ -31,6 +31,7 @@ class Member {
     required this.plan,
     required this.durationMonths,
     required this.fee,
+    this.shift = 'Morning',
     required this.joiningDate,
     required this.expiryDate,
     this.status = 'active',
@@ -70,6 +71,7 @@ class Member {
         'gender': gender,
         'age': age,
         'plan': plan,
+        'shift': shift,
         'duration_months': durationMonths,
         'fee': fee,
         'joining_date': joiningDate.toIso8601String(),
@@ -90,6 +92,7 @@ class Member {
         gender: (m['gender'] as String?) ?? 'Male',
         age: (m['age'] as num?)?.toInt() ?? 0,
         plan: (m['plan'] as String?) ?? '',
+        shift: (m['shift'] as String?) ?? 'Morning',
         durationMonths: (m['duration_months'] as num?)?.toInt() ?? 1,
         fee: (m['fee'] as num?)?.toDouble() ?? 0,
         joiningDate: DateTime.parse(m['joining_date'] as String),

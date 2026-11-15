@@ -235,7 +235,8 @@ class AdminProfileScreen extends StatelessWidget {
     final planName = switch (planType) {
       'monthly' => 'Monthly',
       'quarterly' => 'Quarterly',
-      'yearly' => 'Yearly',
+      'half_yearly' => 'Half Yearly',
+      'yearly' => 'Annual',
       _ => planType ?? 'No active plan',
     };
     final durationLabel = duration == null

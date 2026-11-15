@@ -593,6 +593,10 @@ class ProfileScreen extends StatelessWidget {
                               Pill('${m.age} yrs'),
                               Pill(m.gender),
                               Pill(
+                                '${m.shift} Shift',
+                                icon: Icons.schedule_rounded,
+                              ),
+                              Pill(
                                 tierName(m.durationMonths),
                                 bg: orangeSoft,
                                 fg: const Color(0xffb86e00),

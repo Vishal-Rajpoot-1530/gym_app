@@ -10,10 +10,9 @@ class SubscriptionPlansScreen extends StatelessWidget {
   const SubscriptionPlansScreen({super.key});
 
   static const _plans = [
-    (months: 1, label: '1 Month', detail: 'Flexible monthly access'),
-    (months: 3, label: '3 Months', detail: 'Three months of access'),
-    (months: 12, label: '1 Year', detail: 'Twelve months of access'),
-    (months: 24, label: '2 Years', detail: 'Twenty-four months of access'),
+    (months: 3, label: 'Quarterly', detail: '3 months of access', price: 500),
+    (months: 6, label: 'Half Yearly', detail: '6 months of access', price: 900),
+    (months: 12, label: 'Annual', detail: '12 months of access', price: 1600),
   ];
 
   Future<void> _requestPlan(
@@ -49,7 +48,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
   Widget _planCard(
     BuildContext context,
     Map<String, Object?> admin,
-    ({int months, String label, String detail}) plan,
+    ({int months, String label, String detail, int price}) plan,
   ) => Container(
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(16),
@@ -101,6 +100,15 @@ class SubscriptionPlansScreen extends StatelessWidget {
                 plan.detail,
                 style: const TextStyle(color: muted, fontSize: 12),
               ),
+              const SizedBox(height: 3),
+              Text(
+                '₹${plan.price}',
+                style: const TextStyle(
+                  color: ink,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),
@@ -111,7 +119,8 @@ class SubscriptionPlansScreen extends StatelessWidget {
             foregroundColor: ink,
             padding: const EdgeInsets.symmetric(horizontal: 14),
           ),
-          onPressed: () => _requestPlan(context, admin, plan.label),
+          onPressed: () =>
+              _requestPlan(context, admin, '${plan.label} - ₹${plan.price}'),
           child: const Text('Get plan'),
         ),
       ],

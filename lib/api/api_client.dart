@@ -38,6 +38,13 @@ class ApiClient {
       body = null;
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode >= 500) {
+        throw ApiException(
+          ApiException.serviceUnavailableMessage,
+          statusCode: response.statusCode,
+          networkError: true,
+        );
+      }
       throw ApiException(
         body is Map && body['message'] != null
             ? body['message'].toString()
@@ -97,19 +104,19 @@ class ApiClient {
     } on SocketException catch (error) {
       debugPrint('[API] !! $method $path NO NETWORK: $error');
       throw const ApiException(
-        'Internet connection required. Please connect and try again.',
+        ApiException.serviceUnavailableMessage,
         networkError: true,
       );
     } on TimeoutException catch (error) {
       debugPrint('[API] !! $method $path TIMEOUT: $error');
       throw const ApiException(
-        'Server is not responding. Please try again.',
+        ApiException.serviceUnavailableMessage,
         networkError: true,
       );
     } on http.ClientException catch (error) {
       debugPrint('[API] !! $method $path CLIENT: $error');
       throw const ApiException(
-        'Cannot connect to the server. Please check your connection.',
+        ApiException.serviceUnavailableMessage,
         networkError: true,
       );
     } catch (error) {
@@ -159,12 +166,18 @@ class ApiClient {
       return _decode(response);
     } on SocketException {
       throw const ApiException(
-        'Internet connection required. Please connect and try again.',
+        ApiException.serviceUnavailableMessage,
         networkError: true,
       );
     } on TimeoutException {
       throw const ApiException(
-        'Server is not responding. Please try again.',
+        ApiException.serviceUnavailableMessage,
+        networkError: true,
+      );
+    } on http.ClientException catch (error) {
+      debugPrint('[API] !! UPLOAD $path CLIENT: $error');
+      throw const ApiException(
+        ApiException.serviceUnavailableMessage,
         networkError: true,
       );
     }

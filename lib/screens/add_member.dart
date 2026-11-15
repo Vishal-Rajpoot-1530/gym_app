@@ -26,6 +26,7 @@ class _AddMemberState extends State<AddMember> {
   final keycard = TextEditingController();
 
   String gender = 'Male';
+  String shift = 'Morning';
   int months = 1;
   DateTime join = dayOnly(DateTime.now());
   Uint8List? photo;
@@ -45,6 +46,7 @@ class _AddMemberState extends State<AddMember> {
       custom.text = '${existing.durationMonths}';
       keycard.text = existing.keycard;
       gender = existing.gender;
+      shift = existing.shift == 'Evening' ? 'Evening' : 'Morning';
       months = existing.durationMonths;
       join = dayOnly(existing.joiningDate);
       photo = existing.photo;
@@ -196,6 +198,7 @@ class _AddMemberState extends State<AddMember> {
         email: existing?.email ?? '',
         phone: phone.text.trim(),
         gender: gender,
+        shift: shift,
         age: int.parse(age.text.trim()),
         plan: planLabel(months),
         durationMonths: months,
@@ -254,6 +257,33 @@ class _AddMemberState extends State<AddMember> {
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: sel ? ink : muted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shiftBtn(String value) {
+    final selected = shift == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => shift = value),
+        child: Container(
+          height: 50,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? orange : fieldBg,
+            border: Border.all(color: selected ? orange : lineGrey),
+            borderRadius: value == 'Morning'
+                ? const BorderRadius.horizontal(left: Radius.circular(12))
+                : const BorderRadius.horizontal(right: Radius.circular(12)),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: selected ? ink : muted,
             ),
           ),
         ),
@@ -440,6 +470,17 @@ class _AddMemberState extends State<AddMember> {
                                       ],
                                     ),
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const FieldLabel(
+                                'Training Shift',
+                                required: true,
+                              ),
+                              Row(
+                                children: [
+                                  _shiftBtn('Morning'),
+                                  _shiftBtn('Evening'),
                                 ],
                               ),
                               Padding(
