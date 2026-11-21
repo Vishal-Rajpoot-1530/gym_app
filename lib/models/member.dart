@@ -2,6 +2,22 @@ import 'dart:typed_data';
 
 DateTime dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
+String normalizeShift(String? shift) {
+  final value = shift?.trim().toLowerCase() ?? '';
+  return value.startsWith('evening') ? 'Evening' : 'Morning';
+}
+
+List<Member> membersForShift(Iterable<Member> members, String? shift) {
+  if (shift == null) return members.toList();
+  final selectedShift = normalizeShift(shift);
+  return members
+      .where((member) => normalizeShift(member.shift) == selectedShift)
+      .toList();
+}
+
+double feeAfterDiscount(double fee, double discount) =>
+    double.parse((fee - discount).clamp(0.0, fee).toStringAsFixed(2));
+
 /// Adds [m] months (can be negative) and clamps the day (31 Jan + 1 month = 28/29 Feb).
 DateTime addMonths(DateTime d, int m) {
   final total = d.month - 1 + m;
@@ -43,7 +59,8 @@ class Member {
   }) : createdAt = createdAt ?? DateTime.now();
 
   /// Days until the plan expires (negative = already expired).
-  int get daysLeft => dayOnly(expiryDate).difference(dayOnly(DateTime.now())).inDays;
+  int get daysLeft =>
+      dayOnly(expiryDate).difference(dayOnly(DateTime.now())).inDays;
 
   bool get lapsed => daysLeft < 0;
 
@@ -58,52 +75,56 @@ class Member {
   String get code => 'MV-${(id ?? 0).toString().padLeft(4, '0')}';
 
   String get initials {
-    final parts = name.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     return parts.take(2).map((e) => e[0].toUpperCase()).join();
   }
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'gender': gender,
-        'age': age,
-        'plan': plan,
-        'shift': shift,
-        'duration_months': durationMonths,
-        'fee': fee,
-        'joining_date': joiningDate.toIso8601String(),
-        'expiry_date': expiryDate.toIso8601String(),
-        'status': status,
-        'notes': notes,
-        'keycard': keycard,
-        'pr_kg': prKg,
-        'photo': photo,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'gender': gender,
+    'age': age,
+    'plan': plan,
+    'shift': shift,
+    'duration_months': durationMonths,
+    'fee': fee,
+    'joining_date': joiningDate.toIso8601String(),
+    'expiry_date': expiryDate.toIso8601String(),
+    'status': status,
+    'notes': notes,
+    'keycard': keycard,
+    'pr_kg': prKg,
+    'photo': photo,
+    'created_at': createdAt.toIso8601String(),
+  };
 
   factory Member.fromMap(Map<String, Object?> m) => Member(
-        id: m['id'] as int?,
-        name: (m['name'] as String?) ?? '',
-        email: (m['email'] as String?) ?? '',
-        phone: (m['phone'] as String?) ?? '',
-        gender: (m['gender'] as String?) ?? 'Male',
-        age: (m['age'] as num?)?.toInt() ?? 0,
-        plan: (m['plan'] as String?) ?? '',
-        shift: (m['shift'] as String?) ?? 'Morning',
-        durationMonths: (m['duration_months'] as num?)?.toInt() ?? 1,
-        fee: (m['fee'] as num?)?.toDouble() ?? 0,
-        joiningDate: DateTime.parse(m['joining_date'] as String),
-        expiryDate: DateTime.parse(m['expiry_date'] as String),
-        status: (m['status'] as String?) ?? 'active',
-        notes: (m['notes'] as String?) ?? '',
-        keycard: (m['keycard'] as String?) ?? '',
-        prKg: (m['pr_kg'] as num?)?.toDouble() ?? 0,
-        photo: m['photo'] as Uint8List?,
-        createdAt: DateTime.tryParse((m['created_at'] as String?) ?? ''),
-      );
+    id: m['id'] as int?,
+    name: (m['name'] as String?) ?? '',
+    email: (m['email'] as String?) ?? '',
+    phone: (m['phone'] as String?) ?? '',
+    gender: (m['gender'] as String?) ?? 'Male',
+    age: (m['age'] as num?)?.toInt() ?? 0,
+    plan: (m['plan'] as String?) ?? '',
+    shift: normalizeShift(m['shift'] as String?),
+    durationMonths: (m['duration_months'] as num?)?.toInt() ?? 1,
+    fee: (m['fee'] as num?)?.toDouble() ?? 0,
+    joiningDate: DateTime.parse(m['joining_date'] as String),
+    expiryDate: DateTime.parse(m['expiry_date'] as String),
+    status: (m['status'] as String?) ?? 'active',
+    notes: (m['notes'] as String?) ?? '',
+    keycard: (m['keycard'] as String?) ?? '',
+    prKg: (m['pr_kg'] as num?)?.toDouble() ?? 0,
+    photo: m['photo'] as Uint8List?,
+    createdAt: DateTime.tryParse((m['created_at'] as String?) ?? ''),
+  );
 }
 
 class Payment {
@@ -126,16 +147,16 @@ class Payment {
   });
 
   factory Payment.fromMap(Map<String, Object?> m) => Payment(
-        id: (m['id'] as num).toInt(),
-        memberId: (m['member_id'] as num?)?.toInt(),
-        memberName: (m['member_name'] as String?) ?? '',
-        type: (m['type'] as String?) ?? 'joining',
-        plan: (m['plan'] as String?) ?? '',
-        description: (m['description'] as String?) ?? '',
-        method: (m['method'] as String?) ?? 'Cash',
-        amount: (m['amount'] as num?)?.toDouble() ?? 0,
-        paidAt: DateTime.parse(m['paid_at'] as String),
-      );
+    id: (m['id'] as num).toInt(),
+    memberId: (m['member_id'] as num?)?.toInt(),
+    memberName: (m['member_name'] as String?) ?? '',
+    type: (m['type'] as String?) ?? 'joining',
+    plan: (m['plan'] as String?) ?? '',
+    description: (m['description'] as String?) ?? '',
+    method: (m['method'] as String?) ?? 'Cash',
+    amount: (m['amount'] as num?)?.toDouble() ?? 0,
+    paidAt: DateTime.parse(m['paid_at'] as String),
+  );
 }
 
 class Note {
@@ -156,13 +177,13 @@ class Note {
       tags.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
   factory Note.fromMap(Map<String, Object?> m) => Note(
-        id: (m['id'] as num).toInt(),
-        memberId: (m['member_id'] as num).toInt(),
-        title: (m['title'] as String?) ?? '',
-        body: (m['body'] as String?) ?? '',
-        tags: (m['tags'] as String?) ?? '',
-        createdAt: DateTime.parse(m['created_at'] as String),
-      );
+    id: (m['id'] as num).toInt(),
+    memberId: (m['member_id'] as num).toInt(),
+    title: (m['title'] as String?) ?? '',
+    body: (m['body'] as String?) ?? '',
+    tags: (m['tags'] as String?) ?? '',
+    createdAt: DateTime.parse(m['created_at'] as String),
+  );
 }
 
 class PlanOption {
@@ -189,7 +210,12 @@ class PlanOption {
       default:
         sub = 'Custom';
     }
-    return PlanOption(months == 1 ? '1 Month' : '$months Months', sub, months, fee);
+    return PlanOption(
+      months == 1 ? '1 Month' : '$months Months',
+      sub,
+      months,
+      fee,
+    );
   }
 }
 

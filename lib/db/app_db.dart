@@ -132,7 +132,7 @@ class AppDb {
   }
 
   Map<String, Object?> _memberBody(Member member) {
-    final body = member.toMap();
+    final body = member.toMap()..['shift'] = normalizeShift(member.shift);
     body.remove('id');
     body.remove('photo');
     return body;

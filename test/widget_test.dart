@@ -11,16 +11,16 @@ void main() {
 
   test('member state reflects expiry', () {
     Member make(int daysFromNow, {String status = 'active'}) => Member(
-          name: 'Test User',
-          gender: 'Male',
-          age: 25,
-          plan: '1 Month',
-          durationMonths: 1,
-          fee: 65,
-          joiningDate: DateTime.now(),
-          expiryDate: DateTime.now().add(Duration(days: daysFromNow)),
-          status: status,
-        );
+      name: 'Test User',
+      gender: 'Male',
+      age: 25,
+      plan: '1 Month',
+      durationMonths: 1,
+      fee: 65,
+      joiningDate: DateTime.now(),
+      expiryDate: DateTime.now().add(Duration(days: daysFromNow)),
+      status: status,
+    );
     expect(make(30).state, MStatus.active);
     expect(make(3).state, MStatus.dueSoon);
     expect(make(-2).state, MStatus.inactive);
@@ -44,5 +44,54 @@ void main() {
 
     expect(restored.shift, 'Evening');
     expect(Member.fromMap(oldMap).shift, 'Morning');
+  });
+
+  test('member shift normalization recognizes Evening Shift variants', () {
+    final map = <String, Object?>{
+      'name': 'Test User',
+      'gender': 'Male',
+      'age': 25,
+      'plan': '1 Month',
+      'duration_months': 1,
+      'fee': 65,
+      'joining_date': DateTime(2026, 11, 13).toIso8601String(),
+      'expiry_date': DateTime(2026, 12, 13).toIso8601String(),
+      'shift': ' evening shift ',
+    };
+
+    expect(Member.fromMap(map).shift, 'Evening');
+    expect(normalizeShift('EVENING'), 'Evening');
+    expect(normalizeShift(' morning shift '), 'Morning');
+  });
+
+  test('shift filtering returns only members in the selected shift', () {
+    Member make(String shift) => Member(
+      name: shift,
+      gender: 'Male',
+      age: 25,
+      plan: '1 Month',
+      durationMonths: 1,
+      fee: 65,
+      shift: shift,
+      joiningDate: DateTime(2026, 11, 13),
+      expiryDate: DateTime(2026, 12, 13),
+    );
+    final members = [make('Morning'), make('Evening'), make('Evening Shift')];
+
+    expect(membersForShift(members, 'Morning').map((member) => member.name), [
+      'Morning',
+    ]);
+    expect(
+      membersForShift(members, 'Evening Shift').map((member) => member.name),
+      ['Evening', 'Evening Shift'],
+    );
+    expect(membersForShift(members, null), members);
+  });
+
+  test('discount is subtracted as a fixed amount and cannot go below zero', () {
+    expect(feeAfterDiscount(500, 75), 425);
+    expect(feeAfterDiscount(500, 0), 500);
+    expect(feeAfterDiscount(500, 500), 0);
+    expect(feeAfterDiscount(500, 600), 0);
   });
 }

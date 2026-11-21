@@ -22,6 +22,7 @@ class _AddMemberState extends State<AddMember> {
   final phone = TextEditingController();
   final age = TextEditingController(text: '25');
   final fee = TextEditingController(text: '65.00');
+  final discount = TextEditingController(text: '0');
   final custom = TextEditingController(text: '1');
   final keycard = TextEditingController();
 
@@ -46,7 +47,7 @@ class _AddMemberState extends State<AddMember> {
       custom.text = '${existing.durationMonths}';
       keycard.text = existing.keycard;
       gender = existing.gender;
-      shift = existing.shift == 'Evening' ? 'Evening' : 'Morning';
+      shift = normalizeShift(existing.shift);
       months = existing.durationMonths;
       join = dayOnly(existing.joiningDate);
       photo = existing.photo;
@@ -65,10 +66,16 @@ class _AddMemberState extends State<AddMember> {
 
   @override
   void dispose() {
-    for (final c in [name, phone, age, fee, custom, keycard]) {
+    for (final c in [name, phone, age, fee, discount, custom, keycard]) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  double get payableFee {
+    final amount = double.tryParse(fee.text.trim()) ?? 0;
+    final discountAmount = double.tryParse(discount.text.trim()) ?? 0;
+    return feeAfterDiscount(amount, discountAmount);
   }
 
   DateTime get expiry {
@@ -182,6 +189,7 @@ class _AddMemberState extends State<AddMember> {
 
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
+    form.currentState!.save();
     final card = keycard.text.trim();
     setState(() => saving = true);
     try {
@@ -202,7 +210,7 @@ class _AddMemberState extends State<AddMember> {
         age: int.parse(age.text.trim()),
         plan: planLabel(months),
         durationMonths: months,
-        fee: double.parse(fee.text.trim()),
+        fee: payableFee,
         joiningDate: join,
         expiryDate: expiry,
         status: existing?.status ?? 'active',
@@ -257,33 +265,6 @@ class _AddMemberState extends State<AddMember> {
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: sel ? ink : muted,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _shiftBtn(String value) {
-    final selected = shift == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => shift = value),
-        child: Container(
-          height: 50,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? orange : fieldBg,
-            border: Border.all(color: selected ? orange : lineGrey),
-            borderRadius: value == 'Morning'
-                ? const BorderRadius.horizontal(left: Radius.circular(12))
-                : const BorderRadius.horizontal(right: Radius.circular(12)),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: selected ? ink : muted,
             ),
           ),
         ),
@@ -477,11 +458,30 @@ class _AddMemberState extends State<AddMember> {
                                 'Training Shift',
                                 required: true,
                               ),
-                              Row(
-                                children: [
-                                  _shiftBtn('Morning'),
-                                  _shiftBtn('Evening'),
+                              DropdownButtonFormField<String>(
+                                initialValue: shift,
+                                isExpanded: true,
+                                decoration: fieldDeco(
+                                  hint: 'Select training shift',
+                                  icon: Icons.schedule_rounded,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Morning',
+                                    child: Text('Morning Shift'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Evening',
+                                    child: Text('Evening Shift'),
+                                  ),
                                 ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() => shift = value);
+                                  }
+                                },
+                                onSaved: (value) =>
+                                    shift = normalizeShift(value),
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -549,25 +549,79 @@ class _AddMemberState extends State<AddMember> {
                                   suffix: 'Month(s)',
                                 ),
                               ),
-                              const FieldLabel(
-                                'Fee Amount (₹)',
-                                required: true,
-                              ),
-                              TextFormField(
-                                controller: fee,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 6,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const FieldLabel(
+                                          'Fee Amount (₹)',
+                                          required: true,
+                                        ),
+                                        TextFormField(
+                                          controller: fee,
+                                          keyboardType:
+                                              const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                          onChanged: (_) => setState(() {}),
+                                          validator: (v) {
+                                            final n = double.tryParse(
+                                              (v ?? '').trim(),
+                                            );
+                                            return (n == null || n < 0)
+                                                ? 'Invalid amount'
+                                                : null;
+                                          },
+                                          decoration: fieldDeco(
+                                            icon: Icons.currency_rupee_rounded,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                validator: (v) {
-                                  final n = double.tryParse((v ?? '').trim());
-                                  return (n == null || n < 0)
-                                      ? 'Invalid amount'
-                                      : null;
-                                },
-                                decoration: fieldDeco(
-                                  icon: Icons.currency_rupee_rounded,
-                                ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const FieldLabel('Discount (₹)'),
+                                        TextFormField(
+                                          controller: discount,
+                                          keyboardType:
+                                              const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                          onChanged: (_) => setState(() {}),
+                                          validator: (v) {
+                                            final n = double.tryParse(
+                                              (v ?? '').trim(),
+                                            );
+                                            final feeAmount =
+                                                double.tryParse(
+                                                  fee.text.trim(),
+                                                ) ??
+                                                0;
+                                            return (n == null ||
+                                                    n < 0 ||
+                                                    n > feeAmount)
+                                                ? 'Must not exceed fee'
+                                                : null;
+                                          },
+                                          decoration: fieldDeco(
+                                            icon: Icons.currency_rupee_rounded,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,

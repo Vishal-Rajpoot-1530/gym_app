@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import '../db/app_db.dart';
 import '../models/member.dart';
 import '../widgets/common.dart';
@@ -20,6 +20,7 @@ class MembersScreen extends StatefulWidget {
 class _MembersScreenState extends State<MembersScreen> {
   String q = '';
   String filter = memberFilter.value;
+  String? shiftFilter;
 
   @override
   void initState() {
@@ -53,105 +54,256 @@ class _MembersScreenState extends State<MembersScreen> {
   bool _search(Member m) {
     if (q.isEmpty) return true;
     final s = q.toLowerCase();
-    return m.name.toLowerCase().contains(s) ||
-        m.phone.contains(q) ||
-        m.code.toLowerCase().contains(s) ||
-        m.keycard.toLowerCase().contains(s) ||
-        (m.id?.toString() == q);
+    return m.name.toLowerCase().contains(s) || m.phone.contains(q);
   }
 
   Widget _chip(String label, int count, bool selected) => Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: InkWell(
+    padding: const EdgeInsets.only(right: 8),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => memberFilter.value = label,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? orange : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          onTap: () => memberFilter.value = label,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            decoration: BoxDecoration(
-              color: selected ? orange : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: selected ? orange : lineGrey),
-            ),
-            child: Text('$label ($count)',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: selected ? ink : muted)),
+          border: Border.all(color: selected ? orange : lineGrey),
+        ),
+        child: Text(
+          '$label ($count)',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            color: selected ? ink : muted,
           ),
         ),
-      );
+      ),
+    ),
+  );
+
+  Widget _shiftFilter(int morningCount, int eveningCount) {
+    final selected = shiftFilter;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Row(
+        children: [
+          PopupMenuButton<String>(
+            tooltip: 'Filter by training shift',
+            onSelected: (value) => setState(() => shiftFilter = value),
+            itemBuilder: (context) => [
+              _shiftMenuItem(
+                'Morning',
+                morningCount,
+                Icons.wb_sunny_outlined,
+                selected == 'Morning',
+              ),
+              _shiftMenuItem(
+                'Evening',
+                eveningCount,
+                Icons.nights_stay_outlined,
+                selected == 'Evening',
+              ),
+            ],
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              decoration: BoxDecoration(
+                color: selected == null ? Colors.white : orangeSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: selected == null ? lineGrey : orange),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 17,
+                    color: selected == null ? muted : ink,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    selected == null ? 'Shift filter' : '$selected Shift',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: ink,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(Icons.expand_more_rounded, size: 18, color: muted),
+                ],
+              ),
+            ),
+          ),
+          if (selected != null)
+            IconButton(
+              tooltip: 'Clear shift filter',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => setState(() => shiftFilter = null),
+              icon: const Icon(Icons.close_rounded, size: 19),
+            ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _shiftMenuItem(
+    String shift,
+    int count,
+    IconData icon,
+    bool selected,
+  ) => PopupMenuItem(
+    value: shift,
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: selected ? orange : muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            '$shift Shift',
+            style: TextStyle(
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ),
+        Text('$count', style: const TextStyle(color: muted)),
+        if (selected) ...[
+          const SizedBox(width: 8),
+          const Icon(Icons.check_rounded, size: 17, color: orange),
+        ],
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
-      child: Column(children: [
-        const TabHeader('Members'),
-        Expanded(
-          child: TopSheet(
-            color: pageBg,
-            child: Live<List<Member>>(
-              load: AppDb.i.members,
-              builder: (context, all) {
-                final list = all.where(_matches).where(_search).toList();
-                int count(bool Function(Member) f) => all.where(f).length;
-                return Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                    child: TextField(
-                      onChanged: (v) => setState(() => q = v.trim()),
-                      decoration: fieldDeco(hint: 'Search by name, phone or ID...', icon: Icons.search_rounded)
-                          .copyWith(fillColor: Colors.white),
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(children: [
-                      _chip('All', all.length, filter == 'All'),
-                      _chip('Active', count((m) => m.state != MStatus.inactive), filter == 'Active'),
-                      _chip('Expiring', count((m) => m.state == MStatus.dueSoon), filter == 'Expiring'),
-                      _chip('Inactive', count((m) => m.state == MStatus.inactive), filter == 'Inactive'),
-                    ]),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: RefreshIndicator(
-                      color: orange,
-                      onRefresh: refreshAll,
-                      child: list.isEmpty
-                          ? ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
-                              const SizedBox(height: 90),
-                              Icon(Icons.groups_2_outlined, size: 56, color: Colors.grey.shade400),
-                              const SizedBox(height: 10),
-                              Center(
-                                child: Text(
-                                  all.isEmpty ? 'No members yet.\nTap "Add Member" to enroll your first athlete.' : 'No members found',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: muted, fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ])
-                          : ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                              itemCount: list.length,
-                              itemBuilder: (context, i) => _MemberCard(list[i]),
+      child: Column(
+        children: [
+          const TabHeader('Members'),
+          Expanded(
+            child: TopSheet(
+              color: pageBg,
+              child: Live<List<Member>>(
+                load: AppDb.i.members,
+                builder: (context, all) {
+                  final list = membersForShift(
+                    all,
+                    shiftFilter,
+                  ).where(_matches).where(_search).toList();
+                  int count(bool Function(Member) f) => all.where(f).length;
+                  int shiftCount(String shift) =>
+                      all.where((m) => normalizeShift(m.shift) == shift).length;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                        child: TextField(
+                          onChanged: (v) => setState(() => q = v.trim()),
+                          decoration: fieldDeco(
+                            hint: 'Search by name or phone...',
+                            icon: Icons.search_rounded,
+                          ).copyWith(fillColor: Colors.white),
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            _chip('All', all.length, filter == 'All'),
+                            _chip(
+                              'Active',
+                              count((m) => m.state != MStatus.inactive),
+                              filter == 'Active',
                             ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
-                    child: PrimaryButton(
-                      'Add Member',
-                      icon: Icons.add_rounded,
-                      onPressed: () => Navigator.push(
-                          context, MaterialPageRoute(builder: (_) => const AddMember())),
-                    ),
-                  ),
-                ]);
-              },
+                            _chip(
+                              'Expiring',
+                              count((m) => m.state == MStatus.dueSoon),
+                              filter == 'Expiring',
+                            ),
+                            _chip(
+                              'Inactive',
+                              count((m) => m.state == MStatus.inactive),
+                              filter == 'Inactive',
+                            ),
+                          ],
+                        ),
+                      ),
+                      _shiftFilter(
+                        shiftCount('Morning'),
+                        shiftCount('Evening'),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: RefreshIndicator(
+                          color: orange,
+                          onRefresh: refreshAll,
+                          child: list.isEmpty
+                              ? ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: [
+                                    const SizedBox(height: 90),
+                                    Icon(
+                                      Icons.groups_2_outlined,
+                                      size: 56,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Center(
+                                      child: Text(
+                                        all.isEmpty
+                                            ? 'No members yet.\nTap "Add Member" to enroll your first athlete.'
+                                            : 'No members found',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: muted,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    4,
+                                    16,
+                                    8,
+                                  ),
+                                  itemCount: list.length,
+                                  itemBuilder: (context, i) =>
+                                      _MemberCard(list[i]),
+                                ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+                        child: PrimaryButton(
+                          'Add Member',
+                          icon: Icons.add_rounded,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AddMember(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -162,95 +314,113 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final days = m.daysLeft;
     final st = m.state;
 
     Widget status;
     switch (st) {
       case MStatus.active:
-        status = const Pill('Active', bg: okSoft, fg: okGreen, icon: Icons.circle);
+        status = const Pill(
+          'Active',
+          bg: okSoft,
+          fg: okGreen,
+          icon: Icons.circle,
+        );
         break;
       case MStatus.dueSoon:
-        status = Pill(days == 0 ? 'Due today' : 'Due in $days days',
-            bg: const Color(0xffffe9c7), fg: const Color(0xffb86e00), icon: Icons.shield_outlined);
+        final days = m.daysLeft;
+        status = Pill(
+          days == 0 ? 'Due today' : 'Due in $days days',
+          bg: const Color(0xffffe9c7),
+          fg: const Color(0xffb86e00),
+          icon: Icons.shield_outlined,
+        );
         break;
       case MStatus.inactive:
-        status = const Pill('Inactive', bg: Color(0xffe9ebef), fg: muted, icon: Icons.star_border_rounded);
+        status = const Pill(
+          'Inactive',
+          bg: Color(0xffe9ebef),
+          fg: muted,
+          icon: Icons.star_border_rounded,
+        );
         break;
-    }
-
-    IconData lineIcon = Icons.schedule;
-    Color lineColor = muted;
-    String line;
-    if (st == MStatus.inactive) {
-      if (m.lapsed) {
-        line = 'Lapsed ${-days} days ago (${DateFormat('MMM dd').format(m.expiryDate)})';
-      } else {
-        line = 'Marked inactive  •  valid till ${DateFormat('dd MMM').format(m.expiryDate)}';
-      }
-    } else if (st == MStatus.dueSoon) {
-      lineIcon = Icons.warning_amber_rounded;
-      lineColor = warnRed;
-      line = days == 0
-          ? 'Renewal due today (${DateFormat('dd MMM').format(m.expiryDate)})'
-          : 'Renewal due in $days days (${DateFormat('dd MMM').format(m.expiryDate)})';
-    } else if (m.durationMonths == 1) {
-      line = 'Cycles on ${DateFormat('MMM').format(m.expiryDate)} ${ordinal(m.expiryDate.day)}';
-    } else {
-      line = 'Renews in $days days (${DateFormat('MMM yyyy').format(m.expiryDate)})';
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(id: m.id!))),
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ProfileScreen(id: m.id!)),
+        ),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          child: Column(children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              MemberAvatar(m, radius: 28),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Flexible(
-                      child: Text(m.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MemberAvatar(m, radius: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                m.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (st == MStatus.active) ...[
+                              const SizedBox(width: 5),
+                              const Icon(
+                                Icons.verified_rounded,
+                                color: blue,
+                                size: 17,
+                              ),
+                            ],
+                            const SizedBox(width: 6),
+                            Pill(m.gender),
+                          ],
+                        ),
+                      ],
                     ),
-                    if (st == MStatus.active) ...[
-                      const SizedBox(width: 5),
-                      const Icon(Icons.verified_rounded, color: blue, size: 17),
-                    ],
-                  ]),
-                  const SizedBox(height: 2),
-                  Text('ID: ${m.code}', style: const TextStyle(color: muted, fontSize: 12.5)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 6, runSpacing: 6, children: [
+                  ),
+                  status,
+                ],
+              ),
+              const SizedBox(height: 6),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
                     Pill(planTitle(m.durationMonths)),
-                    Pill('${m.age} yrs  •  ${m.gender}'),
-                  ]),
-                ]),
+                    const SizedBox(width: 6),
+                    Pill('${m.shift} Shift', icon: Icons.schedule_rounded),
+                  ],
+                ),
               ),
-              status,
-            ]),
-            const Divider(height: 22, color: lineGrey),
-            Row(children: [
-              Icon(lineIcon, size: 17, color: lineColor),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(line,
-                    style: TextStyle(color: lineColor, fontSize: 13, fontWeight: FontWeight.w600)),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: muted),
-            ]),
-          ]),
+            ],
+          ),
         ),
       ),
     );
